@@ -13,7 +13,7 @@ https://www.moleg.go.kr/lawinfo/makingList.mo?currentPage=1&lsClsCd=&cptOfiOrgCd
 ---------------
 2025.02.11.
 
-국토부 입법예고 페이지 찾음
+(적용 완료 / 02.13. )국토부 입법예고 페이지
 https://www.molit.go.kr/USR/law/m_46/lst.jsp
 
 국가법령정보센터에서도 입법예고 정보 볼 수 있음
