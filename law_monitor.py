@@ -5,6 +5,7 @@ from datetime import datetime, timedelta
 from email.mime.text import MIMEText
 import schedule
 import time
+import os
 
 # 상수
 today = datetime.today().strftime('%Y-%m-%d')
@@ -17,13 +18,9 @@ MOLEG_LIST = "/lawinfo/makingList.mo"
 MOLEG_DETAIL = "/lawinfo/makingInfo.mo"
 molegParams = {
     'mid': 'a10104010000',
-    'pageCnt': 20,
-    'lsClsCd': '',
-    'cptOfiOrgCd': "국토교통부",  # 국토교통부 %EA%B5%AD%ED%86%A0%EA%B5%90%ED%86%A5%EB%B6%80
-    'keyField': 'lmNm',
-    'keyWord': '',
-    'stYdFmt': '',
-    'edYdFmt': ''
+    'pageCnt': 10,
+    'cptOfiOrgCd': "국토교통부",  # 국토교통부  %EA%B5%AD%ED%86%A0%EA%B5%90%ED%86%A5%EB%B6%80
+    'keyField': 'lmNm'
 }
 param_str = '&'.join([f"{key}={value}" for key, value in molegParams.items()])
 
@@ -47,20 +44,22 @@ def MOLEG_PARSE():
     rows = soup.select('table > tbody > tr')
 
     results = []
-    results.append(f"○ **{MOLEG}**")
-    results.append(f"  {MOLEG_URL}{MOLEG_LIST}?{param_str})")
+    results.append(f"○ {MOLEG}")
+    results.append(f"  {MOLEG_URL}{MOLEG_LIST}?{param_str}")
     results.append("")
 
     for row in rows:
         tds = row.select('td')
         title = tds[1].text.strip()
+        department_name = tds[2].text.strip()
         start_date = tds[3].text.strip()
+
         detail_url = row.select('a')[0]['href'].replace('tPage', 'currentPage').replace('¤', '&')
 
         if start_date == today:          # 오늘 새 글이 있는 경우
             results.append(f" {rows.index(row) + 1}")
             results.append(f" - 제 목: {title}")
-            results.append(f" - 시작일: {start_date}")
+            results.append(f" - 부 서: {department_name}")
             results.append(f" - 주 소: {MOLEG_URL}{detail_url}")
             results.append("")
 
@@ -75,20 +74,21 @@ def MOLIT_PARSE():
     rows = soup.select('table > tbody > tr')
 
     results = []
-    results.append(f"○ **{MOLIT}**")
+    results.append(f"○ {MOLIT}")
     results.append(f"  {MOLIT_URL}{MOLIT_LIST}")
     results.append("")
 
     for row in rows:
         tds = row.select('td')
         title = tds[1].text.strip()
+        department_name = tds[2].text.strip()
         start_date = tds[3].text.strip().split(' ~')[0]
         detail_urls = row.select('a')[0]['href']
         
         if start_date == today:         # 오늘 새 글이 있는 경우
             results.append(f" {rows.index(row) + 1}")
             results.append(f" - 제 목: {title}")
-            results.append(f" - 시작일: {start_date}")
+            results.append(f" - 부 서: {department_name}")
             results.append(f" - 주 소: {MOLIT_URL}{MOLIT_DETAIL}{detail_urls}")
             results.append("")
             
@@ -129,15 +129,19 @@ def send_email(body):
         server.sendmail(smtp_user, to_emails, msg.as_string())  ## 메일 발송 ##
         print("Email sent successfully")
 
+def shutdown_pc():
+    os.system("shutdown /s /t 1")
+
 def main():
     moleg_results = MOLEG_PARSE()
     molit_results = MOLIT_PARSE()
     body = "\n".join(moleg_results + molit_results)
     send_email(body)
-
+    shutdown_pc()           # 이메일 발송 후 PC 종료
 
 # 매일 오전 9시 00분에 main 함수 실행 예약
 schedule.every().day.at("09:00").do(main)
+# schedule.every(5).minutes.do(main)
 
 while True:
     schedule.run_pending()  # 예약된 작업이 있는지 확인하고 실행
