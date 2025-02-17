@@ -7,9 +7,13 @@ https://www.moleg.go.kr/lawinfo/makingList.mo?currentPage=1&lsClsCd=&cptOfiOrgCd
   1. (완료) 하루 한번 수행(오전 9시)
   2. (완료) 구글 메일서버 사용해서 회사 메일로 내용 전송
   3. (완료) 시작일자값이 당일인 자료에 대해 메일을 보내도록
-  4. (완료) 검색조건에 소관부처로 국토교통부 지정
-  5. windows pc를 서버로 놓고 수행예정 (AWS는 상황보고?)
+     > 일자 빼고 부서 나오게 수정
+  5. (완료) 검색조건에 소관부처로 국토교통부 지정
+  6. windows pc를 서버로 놓고 수행예정 (AWS는 상황보고?)
      서버를 놓기보다는 exe파일로 내려서 개인 pc에서 트레이아이콘으로 관리할 수 있도록 할 예정(2/16)
+  7. 법제처 주소 하이퍼링크 되도록
+
+  8. 제목 누르면 바로 링크 연결되도록(후순)
 
 ---------------
 2025.02.11.
@@ -19,4 +23,3 @@ https://www.molit.go.kr/USR/law/m_46/lst.jsp
 
 국가법령정보센터에서도 입법예고 정보 볼 수 있음
 https://www.law.go.kr/LSW/lsAstSc.do?cptOfiCd=1613000#cptOfi1613000
-
