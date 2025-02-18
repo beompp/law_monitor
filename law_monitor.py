@@ -80,6 +80,11 @@ def MOLIT_PARSE_INTITLE():
     soup = BeautifulSoup(response.content, 'html.parser')
     rows = soup.select('table > tbody > tr')
 
+    results = []
+    results.append(f"○ {MOLIT}")
+    results.append(f"  {MOLIT_URL}{MOLIT_LIST}")
+    results.append("")
+
     for row in rows:
         tds = row.select('td')
         startDate = tds[3].text.strip().split(' ~')[0]
@@ -294,51 +299,6 @@ def MOIS_PARSE():
                     rownum += 1
                     findNew = True
             
-    if find_new == False:
-        results.append("  (없음)")
-        results.append("")
-            
-    results.append("")
-    return results
-
-
-# 법제처 입법예고 페이지 파싱
-def MOLEG_PARSE():
-    find_new = False        # 새로운 글이 있는지 확인
-    results = []            # 본문 내용 구성
-    rownum = 1              # 행 번호
-
-    results.append(f"● {MOLEG}  /  {MOLEG_URL}{MOLEG_LIST}")
-    results.append("")
-
-    response = requests.get(MOLEG_URL + MOLEG_LIST)
-    soup = BeautifulSoup(response.content, 'html.parser')
-    rows = soup.select('table > tbody > tr')
-
-    for row in rows:
-        tds = row.select('td')
-        title = tds[1].text.strip()
-        department_name = tds[2].text.strip()
-        start_date = tds[3].text.strip()
-        end_date = tds[4].text.strip()
-
-        detail_url = row.select('a')[0]['href'].replace('tPage', 'currentPage').replace('¤', '&')
-
-        if start_date == today:          # 오늘 새 글이 있는 경우
-            find_new = True
-            results.append(f" {rownum}")
-            results.append(f" - 제 목: {title}")
-            results.append(f" - 부 서: {department_name}")
-            results.append(f" - 시작일자: {start_date}")
-            results.append(f" - 시작일자: {end_date}")
-            results.append(f" - 주 소: {MOLEG_URL}{detail_url}")
-            results.append("")
-            rownum += 1
-            
-    if find_new == False:
-        results.append("  (없음)")
-        results.append("")
-
     results.append("")
 
     if findNew == False:
