@@ -21,3 +21,5 @@
 
 국가법령정보센터에서도 입법예고 정보 볼 수 있음
   > https://www.law.go.kr/LSW/lsAstSc.do?cptOfiCd=1613000#cptOfi1613000
+  > 최신법령: https://www.law.go.kr//lsSc.do?menuId=1&subMenuId=23&tabMenuId=123&eventGubun=060103&query=
+  > 소관부처 국토부 찾아서 오늘날짜로 올라온거 법령 조회
