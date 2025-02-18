@@ -6,6 +6,7 @@ from datetime import datetime, timedelta
 from email.mime.text import MIMEText
 import logging
 
+
 # 로그 설정
 logging.basicConfig(filename='law_monitor.log', level=logging.INFO,
                     format='%(asctime)s - %(levelname)s - %(message)s')
@@ -19,10 +20,11 @@ date = datetime.today().strftime('%Y-%m-%d')  # yyyy-mm-dd
 # date = '2025-12-22'
 yesterday = (datetime.today() - timedelta(days=1)).strftime('%Y-%m-%d')
 
-# 국가법령정보센터 법령
+# 국가법령정보센터
 LAWGO_BASE_URL = "https://www.law.go.kr"
 LAWGO_LIST = f"{LAWGO_BASE_URL}/LSW/lsSc.do?menuId=1&subMenuId=23&tabMenuId=123&eventGubun=060103&query=*"
 LAWGO_ADMRULE_LIST = f"{LAWGO_BASE_URL}/admRulSc.do?menuId=5&subMenuId=45&tabMenuId=203"
+
 
 # 국토교통부 입법예고
 MOLIT_BASE_URL = "https://www.molit.go.kr"
@@ -265,6 +267,7 @@ def MOIS_PARSE():
     results.append("")
 
     response = requests.get(MOIS_LIST)
+
     soup = BeautifulSoup(response.content, 'html.parser')
     rows = soup.select('table > tbody > tr')
 
@@ -291,6 +294,51 @@ def MOIS_PARSE():
                     rownum += 1
                     findNew = True
             
+    if find_new == False:
+        results.append("  (없음)")
+        results.append("")
+            
+    results.append("")
+    return results
+
+
+# 법제처 입법예고 페이지 파싱
+def MOLEG_PARSE():
+    find_new = False        # 새로운 글이 있는지 확인
+    results = []            # 본문 내용 구성
+    rownum = 1              # 행 번호
+
+    results.append(f"● {MOLEG}  /  {MOLEG_URL}{MOLEG_LIST}")
+    results.append("")
+
+    response = requests.get(MOLEG_URL + MOLEG_LIST)
+    soup = BeautifulSoup(response.content, 'html.parser')
+    rows = soup.select('table > tbody > tr')
+
+    for row in rows:
+        tds = row.select('td')
+        title = tds[1].text.strip()
+        department_name = tds[2].text.strip()
+        start_date = tds[3].text.strip()
+        end_date = tds[4].text.strip()
+
+        detail_url = row.select('a')[0]['href'].replace('tPage', 'currentPage').replace('¤', '&')
+
+        if start_date == today:          # 오늘 새 글이 있는 경우
+            find_new = True
+            results.append(f" {rownum}")
+            results.append(f" - 제 목: {title}")
+            results.append(f" - 부 서: {department_name}")
+            results.append(f" - 시작일자: {start_date}")
+            results.append(f" - 시작일자: {end_date}")
+            results.append(f" - 주 소: {MOLEG_URL}{detail_url}")
+            results.append("")
+            rownum += 1
+            
+    if find_new == False:
+        results.append("  (없음)")
+        results.append("")
+
     results.append("")
 
     if findNew == False:
