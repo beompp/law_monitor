@@ -302,12 +302,6 @@ def main():
     body = "\n".join(molit_results + lawgo_results + moleg_results)
     
     send_email(body)
-    shutdown_pc()           # 이메일 발송 후 PC 종료
 
-# main()
-# 매일 오전 9시 00분에 main 함수 실행 예약
-schedule.every().day.at("09:00").do(main)
 
-while True:
-    schedule.run_pending()  # 예약된 작업이 있는지 확인하고 실행
-    time.sleep(1)           # 1초 대기
+main()
