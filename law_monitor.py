@@ -84,6 +84,51 @@ def MOLIT_PARSE():
     return results
 
 
+# 국토교통부 입법예고 페이지 파싱
+def MOLIT_PARSE_INTITLE():
+    logging.info("MOLIT_PARSE_INTITLE 시작")
+
+    find_new = False        # 새로운 글이 있는지 확인
+    results = []            # 본문 내용 구성
+    rownum = 1              # 행 번호
+
+    results.append(f"● {MOLIT}  /  {MOLIT_URL}{MOLIT_LIST}")
+    results.append("")
+
+    response = requests.get(MOLIT_URL + MOLIT_LIST)
+    soup = BeautifulSoup(response.content, 'html.parser')
+    rows = soup.select('table > tbody > tr')
+
+    for row in rows:
+        tds = row.select('td')
+        start_date = tds[3].text.strip().split(' ~')[0]
+        department_name = tds[2].text.strip()
+
+        if start_date == today:         # 오늘 새 글이 있는 경우
+            find_new = True
+
+            detail_urls = row.select('a')[0]['href']
+            detail_response = requests.get(MOLIT_URL + MOLIT_DETAIL + detail_urls)
+            detail_soup = BeautifulSoup(detail_response.content, 'html.parser')
+            title = detail_soup.find('h4').text.strip()
+        
+            results.append(f" {rownum}")
+            results.append(f" - 제 목: {title}")
+            results.append(f" - 부 서: {department_name}")
+            results.append(f" - 예고기간: {tds[3].text.strip().replace(' ~', ' ~ ')}")
+            results.append(f" - 주 소: {MOLIT_URL}{MOLIT_DETAIL}{detail_urls}")
+            results.append("")
+            rownum += 1
+            
+    if find_new == False:
+        results.append("  (없음)")
+        results.append("")
+            
+    results.append("")
+    logging.info("MOLIT_PARSE 완료")
+    return results
+
+
 # 국가법령정보센터 페이지 파싱
 def LAWGO_PARSE():
     logging.info("LAWGO_PARSE 시작")
@@ -148,8 +193,8 @@ def LAWGO_PARSE():
                     results.append(f" {rownum}")
                     results.append(f" - 제 목: {title}")
                     results.append(f" - 부 서: {department_name}")
-                    results.append(f" - 공포일자: {tds[2].text.strip()}")
-                    results.append(f" - 시행일자: {tds[5].text.strip()}")
+                    results.append(f" - 공포일자: {tds[5].text.strip()}")
+                    results.append(f" - 시행일자: {tds[2].text.strip()}")
                     results.append("")
                     rownum += 1
             
@@ -250,18 +295,19 @@ def shutdown_pc():
 
 def main():
     logging.info("main 함수 시작")
-    molit_results = MOLIT_PARSE()
+    # molit_results = MOLIT_PARSE()
+    molit_results = MOLIT_PARSE_INTITLE()
     lawgo_results = LAWGO_PARSE()
     moleg_results = MOLEG_PARSE()
     body = "\n".join(molit_results + lawgo_results + moleg_results)
     
     send_email(body)
-    # shutdown_pc()           # 이메일 발송 후 PC 종료
+    shutdown_pc()           # 이메일 발송 후 PC 종료
 
-main()
+# main()
 # 매일 오전 9시 00분에 main 함수 실행 예약
-# schedule.every().day.at("09:00").do(main)
+schedule.every().day.at("09:00").do(main)
 
-# while True:
-#     schedule.run_pending()  # 예약된 작업이 있는지 확인하고 실행
-#     time.sleep(1)           # 1초 대기
+while True:
+    schedule.run_pending()  # 예약된 작업이 있는지 확인하고 실행
+    time.sleep(1)           # 1초 대기
