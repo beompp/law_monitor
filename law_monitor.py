@@ -44,47 +44,6 @@ MOLEG_DETAIL = "/lawinfo/makingInfo.mo"
 
 
 # 국토교통부 입법예고 페이지 파싱
-def MOLIT_PARSE():
-    logging.info("MOLIT_PARSE 시작")
-
-    find_new = False        # 새로운 글이 있는지 확인
-    results = []            # 본문 내용 구성
-    rownum = 1              # 행 번호
-
-    results.append(f"● {MOLIT}  /  {MOLIT_URL}{MOLIT_LIST}")
-    results.append("")
-
-    response = requests.get(MOLIT_URL + MOLIT_LIST)
-    soup = BeautifulSoup(response.content, 'html.parser')
-    rows = soup.select('table > tbody > tr')
-
-    for row in rows:
-        tds = row.select('td')
-        title = tds[1].text.strip()
-        department_name = tds[2].text.strip()
-        start_date = tds[3].text.strip().split(' ~')[0]
-        detail_urls = row.select('a')[0]['href']
-        
-        if start_date == today:         # 오늘 새 글이 있는 경우
-            find_new = True
-            results.append(f" {rownum}")
-            results.append(f" - 제 목: {title}")
-            results.append(f" - 부 서: {department_name}")
-            results.append(f" - 예고기간: {tds[3].text.strip().replace(' ~', ' ~ ')}")
-            results.append(f" - 주 소: {MOLIT_URL}{MOLIT_DETAIL}{detail_urls}")
-            results.append("")
-            rownum += 1
-            
-    if find_new == False:
-        results.append("  (없음)")
-        results.append("")
-            
-    results.append("")
-    logging.info("MOLIT_PARSE 완료")
-    return results
-
-
-# 국토교통부 입법예고 페이지 파싱
 def MOLIT_PARSE_INTITLE():
     logging.info("MOLIT_PARSE_INTITLE 시작")
 
@@ -152,21 +111,17 @@ def LAWGO_PARSE():
     driver.get(LAWGO_URL + LAWGO_LIST)
     driver.implicitly_wait(10)                      # 페이지 로딩 대기 시간 10초
 
-    print(driver.title)
-    print(driver.current_url)
-    print(driver.page_source)
-
     # 결과가 나올 때까지 페이지 파싱
-    while (element is None or not element.find_elements(By.CSS_SELECTOR, 'tr')) and attempts < 30:  # 30번까지 시도
+    while (element is None or not element.find_elements(By.CSS_SELECTOR, 'tr')) and attempts < 50:  # 50번까지 시도
         try:
             element = driver.find_element(By.CSS_SELECTOR, 'table')
             if not element.find_elements(By.CSS_SELECTOR, 'tr'):
                 element = None
             print(element)
             logging.info(f"페이지 로드 중: {element}")
-        except:
+        except Exception as e:
             time.sleep(1)
-            print("retry")
+            logging.error(f"LAWGO_PARSE 실패: {e}")
             attempts += 1
 
     if element is None:
@@ -259,7 +214,7 @@ def send_email(body):
 
     smtp_server = "smtp.gmail.com"
     smtp_port = 587
-    with open('mailSender.txt', 'r', encoding='utf-8') as file:
+    with open('/home/ec2-user/law-monitor/mailSender.txt', 'r', encoding='utf-8') as file:
         lines = []
         for line in file:
             s_line = line.strip()
@@ -295,7 +250,6 @@ def shutdown_pc():
 
 def main():
     logging.info("main 함수 시작")
-    # molit_results = MOLIT_PARSE()
     molit_results = MOLIT_PARSE_INTITLE()
     lawgo_results = LAWGO_PARSE()
     moleg_results = MOLEG_PARSE()
