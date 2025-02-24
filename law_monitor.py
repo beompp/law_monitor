@@ -111,6 +111,10 @@ def LAWGO_PARSE():
     driver.get(LAWGO_URL + LAWGO_LIST)
     driver.implicitly_wait(10)                      # 페이지 로딩 대기 시간 10초
 
+    print(driver.title)
+    print(driver.current_url)
+    print(driver.page_source)
+
     # 결과가 나올 때까지 페이지 파싱
     while (element is None or not element.find_elements(By.CSS_SELECTOR, 'tr')) and attempts < 50:  # 50번까지 시도
         try:
