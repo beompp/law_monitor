@@ -299,11 +299,139 @@ def MOIS_PARSE():
         results.append("")
             
     results.append("")
+    logging.info("MOLIT_PARSE 완료")
+    return results
+
+
+# 국토교통부 입법예고 페이지 파싱
+def MOLIT_PARSE_INTITLE():
+    logging.info("MOLIT_PARSE_INTITLE 시작")
+
+    find_new = False        # 새로운 글이 있는지 확인
+    results = []            # 본문 내용 구성
+    rownum = 1              # 행 번호
+
+    results.append(f"● {MOLIT}  /  {MOLIT_URL}{MOLIT_LIST}")
+    results.append("")
+
+    response = requests.get(MOLIT_URL + MOLIT_LIST)
+    soup = BeautifulSoup(response.content, 'html.parser')
+    rows = soup.select('table > tbody > tr')
+
+    for row in rows:
+        tds = row.select('td')
+        start_date = tds[3].text.strip().split(' ~')[0]
+        department_name = tds[2].text.strip()
+
+        if start_date == today:         # 오늘 새 글이 있는 경우
+            find_new = True
+
+            detail_urls = row.select('a')[0]['href']
+            detail_response = requests.get(MOLIT_URL + MOLIT_DETAIL + detail_urls)
+            detail_soup = BeautifulSoup(detail_response.content, 'html.parser')
+            title = detail_soup.find('h4').text.strip()
+        
+            results.append(f" {rownum}")
+            results.append(f" - 제 목: {title}")
+            results.append(f" - 부 서: {department_name}")
+            results.append(f" - 예고기간: {tds[3].text.strip().replace(' ~', ' ~ ')}")
+            results.append(f" - 주 소: {MOLIT_URL}{MOLIT_DETAIL}{detail_urls}")
+            results.append("")
+            rownum += 1
+            
+    if find_new == False:
+        results.append("  (없음)")
+        results.append("")
+            
+    results.append("")
+    logging.info("MOLIT_PARSE 완료")
+    return results
+
+
+# 국가법령정보센터 페이지 파싱
+def LAWGO_PARSE():
+    logging.info("LAWGO_PARSE 시작")
+
+    element = None          # 페이지 파싱 결과
+    attempts = 0            # 페이지 파싱 시도 횟수
+    find_new = False        # 새로운 글이 있는지 확인
+    results = []            # 본문 내용 구성
+    rownum = 1              # 행 번호
+    
+    results.append(f"● {LAWGO}  /  {LAWGO_URL}{LAWGO_LIST}")
+    results.append("")
+
+    # Chrome 드라이버 설정
+    service = Service(ChromeDriverManager().install())
+    options = webdriver.ChromeOptions()
+    options.add_argument('--headless')              # 브라우저 창을 표시하지 않음
+    driver = webdriver.Chrome(service=service, options=options)
+
+    # 페이지 로드
+    driver.get(LAWGO_URL + LAWGO_LIST)
+    driver.implicitly_wait(10)                      # 페이지 로딩 대기 시간 10초
+
+    print(driver.title)
+    print(driver.current_url)
+    print(driver.page_source)
+
+    # 결과가 나올 때까지 페이지 파싱
+    while (element is None or not element.find_elements(By.CSS_SELECTOR, 'tr')) and attempts < 30:  # 30번까지 시도
+        try:
+            element = driver.find_element(By.CSS_SELECTOR, 'table')
+            if not element.find_elements(By.CSS_SELECTOR, 'tr'):
+                element = None
+            print(element)
+            logging.info(f"페이지 로드 중: {element}")
+        except:
+            time.sleep(1)
+            print("retry")
+            attempts += 1
+
+    if element is None:
+        driver.quit()
+        results.append("파싱에러")
+        logging.error("LAWGO_PARSE 실패: 파싱에러")
+        return results
+
+    logging.info(f"페이지 로드 완료: {driver.title}")
+
+    rows = element.find_elements(By.CSS_SELECTOR, 'tr')
+    for row in rows:
+        tds = row.find_elements(By.CSS_SELECTOR, 'td')
+        if tds:
+            # print([td.text for td in tds])
+            logging.info(f"행 데이터: {[td.text for td in tds]}")
+            title = tds[1].text.strip()
+            department_name = tds[7].text.strip()
+            open_date = tds[2].text.strip().replace('. ', '-').replace('.', '')
+
+            if open_date == today.replace('-0', '-'):                   # 공포일자가 오늘인 경우
+                if department_name == '국토교통부':                      # 국토교통부만 추출
+                    find_new = True
+                    results.append(f" {rownum}")
+                    results.append(f" - 제 목: {title}")
+                    results.append(f" - 부 서: {department_name}")
+                    results.append(f" - 공포일자: {tds[5].text.strip()}")
+                    results.append(f" - 시행일자: {tds[2].text.strip()}")
+                    results.append("")
+                    rownum += 1
+            
+    if find_new == False:
+        results.append("  (없음)")
+        results.append("")
+
+    driver.quit()
+
+    results.append("")
+    logging.info("LAWGO_PARSE 완료")
     return results
 
 
 # 법제처 입법예고 페이지 파싱
 def MOLEG_PARSE():
+    logging.info("MOLEG_PARSE 시작")
+
     find_new = False        # 새로운 글이 있는지 확인
     results = []            # 본문 내용 구성
     rownum = 1              # 행 번호
@@ -322,7 +450,7 @@ def MOLEG_PARSE():
         start_date = tds[3].text.strip()
         end_date = tds[4].text.strip()
 
-        detail_url = row.select('a')[0]['href'].replace('tPage', 'currentPage').replace('¤', '&')
+        detail_url = row.select('a')[0]['href'].replace('tPage', 'currentPage').replace('¤', '&').replace('국토교통부', '%EA%B5%AD%ED%86%A0%EA%B5%90%ED%86%B5%EB%B6%80')
 
         if start_date == today:          # 오늘 새 글이 있는 경우
             find_new = True
@@ -330,8 +458,8 @@ def MOLEG_PARSE():
             results.append(f" - 제 목: {title}")
             results.append(f" - 부 서: {department_name}")
             results.append(f" - 시작일자: {start_date}")
-            results.append(f" - 시작일자: {end_date}")
-            results.append(f" - 주 소: {MOLEG_URL}{detail_url}")
+            results.append(f" - 종료일자: {end_date}")
+            results.append(f" - 주 소: {MOLEG_URL}{detail_url} ")
             results.append("")
             rownum += 1
             
