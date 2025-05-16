@@ -305,7 +305,7 @@ def MOIS_PARSE():
 
 # 국토교통부 입법예고 페이지 파싱
 def MOLIT_PARSE_INTITLE():
-    logging.info("MOLIT_PARSE_INTITLE 시작")
+    logging.info("국토교통부 입법예고 시작")
 
     find_new = False        # 새로운 글이 있는지 확인
     results = []            # 본문 내용 구성
@@ -340,17 +340,16 @@ def MOLIT_PARSE_INTITLE():
             rownum += 1
             
     if find_new == False:
-        results.append("  (없음)")
-        results.append("")
+        results.clear()
             
     results.append("")
-    logging.info("MOLIT_PARSE 완료")
+    logging.info("국토교통부 입법예고 완료")
     return results
 
 
 # 국가법령정보센터 페이지 파싱
 def LAWGO_PARSE():
-    logging.info("LAWGO_PARSE 시작")
+    logging.info("국가법령정보센터 시작")
 
     element = None          # 페이지 파싱 결과
     attempts = 0            # 페이지 파싱 시도 횟수
@@ -385,13 +384,13 @@ def LAWGO_PARSE():
             logging.info(f"페이지 로드 중: {element}")
         except:
             time.sleep(1)
-            print("retry")
+            logging.error(f"LAWGO_PARSE 실패: {e}")
             attempts += 1
 
     if element is None:
         driver.quit()
         results.append("파싱에러")
-        logging.error("LAWGO_PARSE 실패: 파싱에러")
+        logging.error("국가법령정보센터 파싱 실패: 파싱에러")
         return results
 
     logging.info(f"페이지 로드 완료: {driver.title}")
@@ -418,19 +417,18 @@ def LAWGO_PARSE():
                     rownum += 1
             
     if find_new == False:
-        results.append("  (없음)")
-        results.append("")
+        results.clear()
 
     driver.quit()
 
     results.append("")
-    logging.info("LAWGO_PARSE 완료")
+    logging.info("국가법령정보센터 완료")
     return results
 
 
 # 법제처 입법예고 페이지 파싱
 def MOLEG_PARSE():
-    logging.info("MOLEG_PARSE 시작")
+    logging.info("법제처 입법예고 시작")
 
     find_new = False        # 새로운 글이 있는지 확인
     results = []            # 본문 내용 구성
@@ -464,211 +462,66 @@ def MOLEG_PARSE():
             rownum += 1
             
     if find_new == False:
-        results.append("  (없음)")
-        results.append("")
+        results.clear()
 
     results.append("")
-
-    if findNew == False:
-        results.clear()
-        logging.info("파싱 결과 없음")
-
-    logging.info("행안부 행변 완료")
+    logging.info("법제처 입법예고 완료")
     return results
 
 
-# 국가법령정보센터 최신법령 파싱
-def LAWGO_PRIVACY_PARSE():
-    logging.info(f"국가법령정보센터 최신법령 파싱 시작: {LAWGO_LIST}")
+# 행안부 주민등록정보 페이지 파싱
+def MOIS_PARSE():
+    logging.info("행안부 행변 시작")    
 
-    findNew = False        # 새로운 글이 있는지 확인
+    find_new = False        # 새로운 글이 있는지 확인
     results = []            # 본문 내용 구성
     rownum = 1              # 행 번호
-    today = date
 
-    # 실제 데이터 요청 주소
-    url = "https://www.law.go.kr/admRulScListR.do"
-    
-    # Query String Parameters
-    params = {
-        "menuId": "5",
-        "subMenuId": "41",
-        "tabMenuId": "183"
-    }
+    results.append(f"● {MOIS}  /  {MOIS_URL}{MOIS_LIST}")
+    results.append("")
 
-    # Form Data (가장 중요한 부분)
-    payload = {
-        "q": "*", 
-        "outmax": "150",
-        "pg": "1",
-        "p6": "2,3",
-        "fsort": "61,21,11,31",
-        "section": "admRulNm",
-        "admRulSeq": "0",
-        "dtlYn": "N",
-        "admType": "N",
-        "p15": "1,3"
-    }
+    response = requests.get(MOIS_URL + MOIS_LIST)
+    soup = BeautifulSoup(response.content, 'html.parser')
+    rows = soup.select('table > tbody > tr')
 
-    # Request Headers (서버가 거절하지 않게 하는 필수 정보)
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36",
-        "Referer": "https://www.law.go.kr/admRulSc.do",     # 이 주소를 통해 들어왔다고 알려줌
-        "X-Requested-With": "XMLHttpRequest"    # AJAX 요청임을 명시
-    }
+    for row in rows:
+        tds = row.select('td')
+        if len(tds) >= 5:
+            link_tag = tds[1].select_one('div > a')
+            date_value = tds[4].text.strip()
 
-    try:
-        results.append(f"● 국가법령정보센터 - 최신행정규칙(기관: 개인정보보호위원회)  /  {url}")
-        results.append("")
+            # Check if '법정동' is in the text of the link tag
+            if link_tag and '법정동' in link_tag.text and date_value == todayDot:
+                find_new = True
+                href_value = link_tag['href']
+                detail_response = requests.get(MOIS_URL + href_value)
+                detail_soup = BeautifulSoup(detail_response.content, 'html.parser')
 
-        # 개인정보보호위원회에서 다루는 행정규칙 목록 로드
-        with open('privacy_admRule.txt', 'r', encoding='utf-8') as f:
-            privacy_list = [line.strip() for line in f.readlines() if line.strip()]
-
-        # 파싱 시작
-        response = requests.post(url, params=params, data=payload, headers=headers)
-        response.raise_for_status()
-        soup = BeautifulSoup(response.text, 'html.parser')
-        
-        rows = soup.select('table tr')
-        for row in rows:
-            cols = row.find_all('td')
-
-            if len(cols) < 8:
-                continue
-
-            title = cols[1].get_text().strip()
-            if title in privacy_list:           # 개인정보보호위원회에서 다루는 행정규칙인 경우
-                openDate = cols[4].get_text().strip().replace('. ', '-').replace('.', '')
-                startDate = cols[5].get_text().strip().replace('. ', '-').replace('.', '')
-                departmentName = cols[7].get_text().strip()
-
-                if today == openDate or today == startDate:   # 공포일자 혹은 시행일자가 오늘인 경우
-                    findNew = True
-                    results.append(f"{rownum}")
-                    results.append(f" - 제 목: {title}")
-                    results.append(f" - 부 서: {departmentName}")
-                    results.append(f" - 공포일자: {cols[4].get_text().strip()}")
-                    results.append(f" - 시행일자: {cols[5].get_text().strip()}")
+                desc_mo_text_replace = detail_soup.find('div', id='desc_mo').get_text(strip=True).replace("\xa0", "")
+                desc_mo_text = detail_soup.find('div', id='desc_mo').get_text(strip=True)
+                
+                if '법정동(리)코드:(폐지)' in desc_mo_text_replace:
+                    results.append(f" {rownum}")
+                    results.append(f" - 제 목: {link_tag.text}")
+                    results.append(f" - 주 소: {MOIS_URL}{href_value}")
                     results.append("")
                     rownum += 1
-
-        results.append("")
-
-    except Exception as e:
-        logging.error(f"파싱 에러 발생: {e}")
-
-    if findNew == False:
+            
+    if find_new == False:
         results.clear()
-        logging.info("파싱 결과 없음")        
 
-    logging.info("국가법령정보센터 개인정보보호위원회 파싱 완료")
-    return results
-
-
-# 국가법령정보센터 최신행정규칙 파싱
-def LAWGO_PRIVACY_RULE_PARSE():
-    logging.info(f"국가법령정보센터 최신행정규칙 파싱 시작: {LAWGO_ADMRULE_LIST}")
-
-    findNew = False        # 새로운 글이 있는지 확인
-    results = []            # 본문 내용 구성
-    rownum = 1              # 행 번호
-    today = date
-
-    # 실제 데이터 요청 주소
-    url = "https://www.law.go.kr/admRulScListR.do"
-    
-    # Query String Parameters
-    params = {
-        "menuId": "5",
-        "subMenuId": "41",
-        "tabMenuId": "183"
-    }
-
-    # Form Data (가장 중요한 부분)
-    payload = {
-        "q": "*", 
-        "outmax": "150",
-        "pg": "1",
-        "p6": "2,3",
-        "fsort": "61,21,11,31",
-        "section": "admRulNm",
-        "admRulSeq": "0",
-        "dtlYn": "N",
-        "admType": "N",
-        "p15": "1,3"
-    }
-
-    # Request Headers (서버가 거절하지 않게 하는 필수 정보)
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36",
-        "Referer": "https://www.law.go.kr/admRulSc.do",     # 이 주소를 통해 들어왔다고 알려줌
-        "X-Requested-With": "XMLHttpRequest"    # AJAX 요청임을 명시
-    }
-
-    try:
-        results.append(f"● 국가법령정보센터 - 최신행정규칙(기관: 개인정보보호위원회)  /  {url}")
-        results.append("")
-
-        # 개인정보보호위원회에서 다루는 행정규칙 목록 로드
-        with open('privacy_admRule.txt', 'r', encoding='utf-8') as f:
-            privacy_list = [line.strip() for line in f.readlines() if line.strip()]
-
-        # 파싱 시작
-        response = requests.post(url, params=params, data=payload, headers=headers)
-        response.raise_for_status()
-        soup = BeautifulSoup(response.text, 'html.parser')
-        
-        rows = soup.select('table tr')
-        for row in rows:
-            cols = row.find_all('td')
-
-            if len(cols) < 8:
-                continue
-
-            title = cols[1].get_text().strip()
-            if title in privacy_list:           # 개인정보보호위원회에서 다루는 행정규칙인 경우
-                openDate = cols[4].get_text().strip().replace('. ', '-').replace('.', '')
-                startDate = cols[5].get_text().strip().replace('. ', '-').replace('.', '')
-                departmentName = cols[7].get_text().strip()
-
-                if today == openDate or today == startDate:   # 공포일자 혹은 시행일자가 오늘인 경우
-                    findNew = True
-                    results.append(f"{rownum}")
-                    results.append(f" - 제 목: {title}")
-                    results.append(f" - 부 서: {departmentName}")
-                    results.append(f" - 공포일자: {cols[4].get_text().strip()}")
-                    results.append(f" - 시행일자: {cols[5].get_text().strip()}")
-                    results.append("")
-                    rownum += 1
-
-        results.append("")
-
-    except Exception as e:
-        logging.error(f"파싱 에러 발생: {e}")
-
-    if findNew == False:
-        results.clear()
-        logging.info("파싱 결과 없음")        
-
-    logging.info("국가법령정보센터 개인정보보호위원회 파싱 완료")
+    results.append("")
+    logging.info("MOLEG_PARSE 완료")
     return results
 
 
 # 파싱 결과 이메일 발송
-def send_email(body, reciever):
-    logging.info(f"send_email 시작 / {reciever}")
+def send_email(body):
+    logging.info("이메일 발송 시작")
 
-    if(not body):
-        logging.info("메일 발송할 내용 없음")
-        return
-
-    today = date
-    smtpServer = "smtp.gmail.com"
-    smtpPort = 587
-
-    with open(f'/home/ec2-user/law-monitor/mailReciever_{reciever}.txt', 'r', encoding='utf-8') as file:
-    # with open(f'../mail_reciever/mailReciever_{reciever}.txt', 'r', encoding='utf-8') as file:     # 메일 발송 테스트
+    smtp_server = "smtp.gmail.com"
+    smtp_port = 587
+    with open('/home/ec2-user/law-monitor/mailSender.txt', 'r', encoding='utf-8') as file:
         lines = []
         for line in file:
             s_line = line.strip()
@@ -702,26 +555,19 @@ def send_email(body, reciever):
         print("Email sent successfully")
         logging.info("이메일 발송 성공")
 
+def shutdown_pc():
+    logging.info("PC 종료")
+    os.system("shutdown /s /t 1")
 
 def main():
     logging.info("==============================")
     logging.info("main 함수 시작")
-    logging.info("==============================")
+    molit_results = MOLIT_PARSE_INTITLE()
+    lawgo_results = LAWGO_PARSE()
+    moleg_results = MOLEG_PARSE()
+    body = "\n".join(molit_results + lawgo_results + moleg_results)
+    
+    send_email(body)
 
-    # 국토부 EAIS 파싱
-    molit = MOLIT_PARSE_INTITLE()       # 국토교통부 입법예고
-    lawgo = LAWGO_MOLIT_PARSE("eais")  # 국가법령정보센터 최신법령
-    moleg = MOLEG_PARSE()               # 법제처 입법예고
-    mois = MOIS_PARSE()                 # 행안부 행정구역변경
-    eaisBody = "\n".join(molit + lawgo + moleg + mois)
-
-    # 개인정보보호위원회 파싱
-    lawgoPrivacy = LAWGO_MOLIT_PARSE("privacy")     # 국가법령정보센터 최신법령
-    lawgoPrivacyRule = LAWGO_PRIVACY_RULE_PARSE()   # 국가법령정보센터 최신행정규칙
-    privacyBody = "\n".join(lawgoPrivacy + lawgoPrivacyRule)
-
-    # 이메일 발송
-    send_email(eaisBody, "eais")
-    send_email(privacyBody, "privacy")
 
 main()
