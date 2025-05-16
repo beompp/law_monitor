@@ -25,8 +25,8 @@ sys.stdout.reconfigure(encoding='utf-8')
 
 # 상수
 today = datetime.today().strftime('%Y-%m-%d')
-# todayDot = today.replace('-', '.') + '.'
-todayDot = '2024.07.26.'
+todayDot = today.replace('-', '.') + '.'
+# todayDot = '2025.05.10.'
 yesterday = (datetime.today() - timedelta(days=1)).strftime('%Y-%m-%d')
 
 # 국가법령정보센터
@@ -55,7 +55,7 @@ MOIS_DETAIL = "/frt/bbs/type001/commonSelectBoardArticle.do?bbsId=BBSMSTR_000000
 
 # 국토교통부 입법예고 페이지 파싱
 def MOLIT_PARSE_INTITLE():
-    logging.info("MOLIT_PARSE_INTITLE 시작")
+    logging.info("국토교통부 입법예고 시작")
 
     find_new = False        # 새로운 글이 있는지 확인
     results = []            # 본문 내용 구성
@@ -90,17 +90,16 @@ def MOLIT_PARSE_INTITLE():
             rownum += 1
             
     if find_new == False:
-        results.append("  (없음)")
-        results.append("")
+        results.clear()
             
     results.append("")
-    logging.info("MOLIT_PARSE 완료")
+    logging.info("국토교통부 입법예고 완료")
     return results
 
 
 # 국가법령정보센터 페이지 파싱
 def LAWGO_PARSE():
-    logging.info("LAWGO_PARSE 시작")
+    logging.info("국가법령정보센터 시작")
 
     element = None          # 페이지 파싱 결과
     attempts = 0            # 페이지 파싱 시도 횟수
@@ -135,13 +134,13 @@ def LAWGO_PARSE():
             logging.info(f"페이지 로드 중: {element}")
         except Exception as e:
             time.sleep(1)
-            logging.error(f"LAWGO_PARSE 실패: {e}")
+            logging.error(f"국가법령정보센터 파싱 실패: {e}")
             attempts += 1
 
     if element is None:
         driver.quit()
         results.append("파싱에러")
-        logging.error("LAWGO_PARSE 실패: 파싱에러")
+        logging.error("국가법령정보센터 파싱 실패: 파싱에러")
         return results
 
     logging.info(f"페이지 로드 완료: {driver.title}")
@@ -168,19 +167,18 @@ def LAWGO_PARSE():
                     rownum += 1
             
     if find_new == False:
-        results.append("  (없음)")
-        results.append("")
+        results.clear()
 
     driver.quit()
 
     results.append("")
-    logging.info("LAWGO_PARSE 완료")
+    logging.info("국가법령정보센터 완료")
     return results
 
 
 # 법제처 입법예고 페이지 파싱
 def MOLEG_PARSE():
-    logging.info("MOLEG_PARSE 시작")
+    logging.info("법제처 입법예고 시작")
 
     find_new = False        # 새로운 글이 있는지 확인
     results = []            # 본문 내용 구성
@@ -214,17 +212,16 @@ def MOLEG_PARSE():
             rownum += 1
             
     if find_new == False:
-        results.append("  (없음)")
-        results.append("")
+        results.clear()
 
     results.append("")
-    logging.info("MOLEG_PARSE 완료")
+    logging.info("법제처 입법예고 완료")
     return results
 
 
 # 행안부 주민등록정보 페이지 파싱
 def MOIS_PARSE():
-    logging.info("MOIS_PARSE 시작")    
+    logging.info("행안부 행변 시작")    
 
     find_new = False        # 새로운 글이 있는지 확인
     results = []            # 본문 내용 구성
@@ -245,32 +242,41 @@ def MOIS_PARSE():
 
             # Check if '법정동' is in the text of the link tag
             if link_tag and '법정동' in link_tag.text and date_value == todayDot:
+                find_new = True
                 href_value = link_tag['href']
                 detail_response = requests.get(MOIS_URL + href_value)
                 detail_soup = BeautifulSoup(detail_response.content, 'html.parser')
 
+                desc_mo_text_replace = detail_soup.find('div', id='desc_mo').get_text(strip=True).replace("\xa0", "")
                 desc_mo_text = detail_soup.find('div', id='desc_mo').get_text(strip=True)
-                print(f"Description: {desc_mo_text}")
                 
-                if '법정동(리) 코드 : (폐지)' in desc_mo_text:
-                    # Add the result to the output
-                    # 법정동 폐지되면 아래 어떻게 보일지 내용 적어야함
+                if '법정동(리)코드:(폐지)' in desc_mo_text_replace:
                     results.append(f" {rownum}")
-                    results.append(f" - 제 목: {link_tag.text.strip()}")
-                    results.append(f" - 부 서: {tds[3].text.strip()}")
-                    results.append(f" - 날짜: {date_value}")
+                    results.append(f" - 제 목: {link_tag.text}")
                     results.append(f" - 주 소: {MOIS_URL}{href_value}")
                     results.append("")
                     rownum += 1
+            
+    if find_new == False:
+        results.clear()
+
+    results.append("")
+    logging.info("행안부 행변 완료")
+    return results
 
 
 # 파싱 결과 이메일 발송
 def send_email(body):
-    logging.info("이메일 발송 시작")
+    logging.info("send_email 시작")
+
+    if(not body):
+        logging.info("메일 발송할 내용 없음")
+        return
 
     smtp_server = "smtp.gmail.com"
     smtp_port = 587
-    with open('/home/ec2-user/law-monitor/mailSender.txt', 'r', encoding='utf-8') as file:
+    # with open('/home/ec2-user/law-monitor/mailSender.txt', 'r', encoding='utf-8') as file:
+    with open('mailSender.txt', 'r', encoding='utf-8') as file:     # 메일 발송 테스트
         lines = []
         for line in file:
             s_line = line.strip()
@@ -300,21 +306,22 @@ def send_email(body):
         print("Email sent successfully")
         logging.info("이메일 발송 성공")
 
+
 def shutdown_pc():
     logging.info("PC 종료")
     os.system("shutdown /s /t 1")
 
 def main():
     logging.info("main 함수 시작")
-    # molit_results = MOLIT_PARSE_INTITLE()
-    # lawgo_results = LAWGO_PARSE()
-    # moleg_results = MOLEG_PARSE()
-    # body = "\n".join(molit_results + lawgo_results + moleg_results)
+    molit_results = MOLIT_PARSE_INTITLE()
+    lawgo_results = LAWGO_PARSE()
+    moleg_results = MOLEG_PARSE()
+    mois_results = MOIS_PARSE()
+    # body = "\n".join(mois_results)
+    body = "\n".join(molit_results + lawgo_results + moleg_results + mois_results)
     
-    # send_email(body)
-    print(body)
+    send_email(body)
+    # print(body)
 
 
-# main()
-MOIS_PARSE()
-# MOLIT_PARSE_INTITLE()
+main()
