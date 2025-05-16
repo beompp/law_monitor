@@ -28,4 +28,8 @@
 국가법령정보센터 - 최신법령 - 시행법령 추가
   - 국토부가 소관부처인 내용만 조회
   - https://www.law.go.kr/lsSc.do?menuId=1&subMenuId=23&tabMenuId=123&query=
-  
+
+---------------
+2025.02.19.
+
+실행 로그 기록하도록 수정 (law_monitor.log)
