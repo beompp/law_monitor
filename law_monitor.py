@@ -15,8 +15,8 @@ sys.stdout.reconfigure(encoding='utf-8')
 ####################
 #      상수        #
 ####################
-# date = datetime.today().strftime('%Y-%m-%d')  # yyyy-mm-dd
-date = '2025-12-22'
+date = datetime.today().strftime('%Y-%m-%d')  # yyyy-mm-dd
+# date = '2025-12-22'
 yesterday = (datetime.today() - timedelta(days=1)).strftime('%Y-%m-%d')
 
 # 국가법령정보센터 법령
@@ -491,8 +491,8 @@ def send_email(body, reciever):
     smtpServer = "smtp.gmail.com"
     smtpPort = 587
 
-    # with open(f'/home/ec2-user/law-monitor/mailReciever_{reciever}.txt', 'r', encoding='utf-8') as file:
-    with open(f'../mail_reciever/mailReciever_{reciever}.txt', 'r', encoding='utf-8') as file:     # 메일 발송 테스트
+    with open(f'/home/ec2-user/law-monitor/mailReciever_{reciever}.txt', 'r', encoding='utf-8') as file:
+    # with open(f'../mail_reciever/mailReciever_{reciever}.txt', 'r', encoding='utf-8') as file:     # 메일 발송 테스트
         lines = []
         for line in file:
             s_line = line.strip()
