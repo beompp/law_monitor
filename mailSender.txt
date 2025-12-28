@@ -1,7 +1,0 @@
-# 메일 보낼 계정 ID/PW
-ncfgema@gmail.com             # ID
-****************              # PW
-
-# 받는이
-beomp@solideos.com          
-minsungbyun@solideos.com     # 변민성

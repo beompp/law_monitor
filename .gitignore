@@ -1,0 +1,16 @@
+# Python
+__pycache__/
+*.pyc
+
+# PyInstaller
+build/
+dist/
+*.spec
+
+# IntelliJ
+.idea/
+*.iml
+
+# Secrets
+AWS/*.pem
+AWS/*.ppk
