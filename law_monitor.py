@@ -71,7 +71,7 @@ def MOLIT_PARSE_INTITLE():
 
     # 세움터에서 다루는 법령 목록 로드
     try:
-        with open('eais_law.txt', 'r', encoding='utf-8') as f:
+        with open('/home/ec2-user/law-monitor/laws/eais_law.txt', 'r', encoding='utf-8') as f:
             lawList = [line.strip() for line in f.readlines() if line.strip()]
     except FileNotFoundError:
         # 파일이 없을 때 로그를 남기고 빈 결과 반환
@@ -170,7 +170,7 @@ def LAWGO_PARSE(target):      # target: eais or privacy / 같은 함수 재사�
 
     # 세움터에서 다루는 법령 목록 로드
     try:
-        with open(f'{target}_law.txt', 'r', encoding='utf-8') as f:
+        with open(f'/home/ec2-user/law-monitor/laws/{target}_law.txt', 'r', encoding='utf-8') as f:
             lawList = [line.strip() for line in f.readlines() if line.strip()]
     except FileNotFoundError:
         # 파일이 없을 때 로그를 남기고 빈 결과 반환
@@ -238,7 +238,7 @@ def MOLEG_PARSE():
 
     # 세움터에서 다루는 법령 목록 로드
     try:
-        with open('eais_law.txt', 'r', encoding='utf-8') as f:
+        with open('/home/ec2-user/law-monitor/laws/eais_law.txt', 'r', encoding='utf-8') as f:
             lawList = [line.strip() for line in f.readlines() if line.strip()]
     except FileNotFoundError:
         # 파일이 없을 때 로그를 남기고 빈 결과 반환
@@ -388,7 +388,7 @@ def LAWGO_ADMRULE_PARSE():
 
     # 개인정보보호위원회에서 다루는 행정규칙 목록 로드
     try:
-        with open('privacy_admRule.txt', 'r', encoding='utf-8') as f:
+        with open('/home/ec2-user/law-monitor/laws/privacy_admRule.txt', 'r', encoding='utf-8') as f:
             privacy_list = [line.strip() for line in f.readlines() if line.strip()]
     except FileNotFoundError:
         # 파일이 없을 때 로그를 남기고 빈 결과 반환
@@ -454,7 +454,7 @@ def send_email(body, reciever):
     smtpPort = 587
 
     try:
-        with open(f'/home/ec2-user/law-monitor/mailReciever_{reciever}.txt', 'r', encoding='utf-8') as file:
+        with open(f'/home/ec2-user/law-monitor/mailReciever/{reciever}.txt', 'r', encoding='utf-8') as file:
         # with open(f'../mail_reciever/mailReciever_{reciever}.txt', 'r', encoding='utf-8') as file:     # 메일 발송 테스트
             lines = []
             for line in file:
